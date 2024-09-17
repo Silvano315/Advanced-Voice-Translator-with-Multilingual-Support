@@ -3,3 +3,4 @@ SpeechRecognition
 transformers
 torch
 pydub
+sqlite3
