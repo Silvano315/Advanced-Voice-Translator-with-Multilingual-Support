@@ -1,10 +1,10 @@
-# Voice applications and emotion recognition
+# GUI Voice Translator from Italian speech
 
-This project has the purpose to create some applications about voice tasks: recognition, translation, emotion detection and something more. I mostly use pre-trained models from transformer library and implement anything I can think of (guy, explainability, apps).
+This project is a proof-of-concept for a Translator GUI: an application that, firstly, uses a speech to text model to capture Italian sentences and then, uses a translation model to obtain the same sentences in other five other languages. I mostly use pre-trained models from transformer library and implement anything I can think of (guy, explainability, apps).
 
 ## Voice Translator
 
-Questa applicazione permette di registrare audio in italiano e tradurlo in inglese utilizzando un'interfaccia grafica user-friendly.
+This application allows you to record audio in Italian and translate it into English using a user-friendly graphical interface.
 
 ### Requirements
 
@@ -34,16 +34,16 @@ Questa applicazione permette di registrare audio in italiano e tradurlo in ingle
 
 ### Usage
 
-Run `main.py`:
+Run `main_translator.py`:
 
 ```
-python main.py
+python main_translator.py
 ```
 
-1. Clicca su "Registra" per iniziare la registrazione audio.
-2. Parla chiaramente in italiano.
-3. Il testo riconosciuto apparirà nella casella di testo superiore.
-4. Clicca su "Traduci" per ottenere la traduzione in inglese.
+1. Click on "Record" to start recording audio.
+2. Speaks clearly in Italian.
+3. The recognized text will appear in the upper text box.
+4. Click on "Translate" to get the translation in English.
 
 ### Contributions
 
