@@ -1,7 +1,9 @@
 from PyQt6.QtWidgets import (QMainWindow, QPushButton, QTextEdit, QVBoxLayout, QHBoxLayout, 
                              QWidget, QLabel, QComboBox, QStatusBar, QFrame)
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtGui import QFont, QIcon, QPainter
 from PyQt6.QtCore import Qt
+from PyQt6.QtCharts import QChart, QChartView, QLineSeries, QValueAxis
+import numpy as np
 from src.audio.recorder import AudioThread
 from src.translator.model import TranslatorModel
 from src.database.manager import DatabaseManager
@@ -10,62 +12,134 @@ class TranslatorApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Vocal Translator")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 800, 600)
 
         self.setStyleSheet("""
-            QMainWindow {
-                background-color: #f0f0f0;
-            }
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QTextEdit {
-                background-color: white;
-                color : black;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 14px;
-            }
-            QLabel {
-                font-size: 16px;
-                color: #333;
-            }
-            QComboBox {
-                padding: 5px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-            }
-        """)
-
-        self.centra_widget = QWidget()
-        self.setCentralWidget(self.centra_widget)
-        self.layout = QVBoxLayout(self.centra_widget)
-
+        QMainWindow {
+            background-color: #f0f0f0;
+        }
+        QPushButton {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        QPushButton:hover {
+            background-color: #45a049;
+        }
+        QTextEdit {
+            background-color: white;
+            color: black;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 14px;
+        }
+        QLabel {
+            font-size: 16px;
+            color: #333;
+        }
+        QComboBox {
+            background-color: white;
+            color: black;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 100px;
+        }
+        QComboBox::drop-down {
+            border: none;
+            background-color: transparent;
+        }
+        QComboBox::down-arrow {
+            image: none;
+            border: none;
+            width: 20px;
+            height: 20px;
+        }
+        QComboBox::down-arrow:on {
+            top: 1px;
+            left: 1px;
+        }
+        QComboBox QAbstractItemView {
+            background-color: white;
+            color: black;
+            selection-background-color: #e0e0e0;
+            selection-color: black;
+            border: 1px solid #ddd;
+        }
+        QChartView {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    """)
+        self.setup_audio_visualizer()
         self.setup_ui()
 
         self.audio_thread = AudioThread(self)
         self.audio_thread.textDetected.connect(self.on_text_detected)
+        self.audio_thread.audioDataReady.connect(self.update_waveform)
 
         self.translator_model = TranslatorModel()
         self.db_manager = DatabaseManager()
 
         self.statusBar().showMessage('Ready')
 
+    def setup_audio_visualizer(self):
+        self.audio_chart = QChart()
+        self.audio_series = QLineSeries()
+        
+        pen = self.audio_series.pen()
+        pen.setWidth(2)
+        pen.setColor(Qt.GlobalColor.darkBlue)  
+        self.audio_series.setPen(pen)
+        
+        self.axis_x = QValueAxis()
+        self.axis_y = QValueAxis()
+        self.axis_x.setRange(0, 1000)
+        self.axis_y.setRange(-1, 1)
+        
+        self.axis_x.setLabelsVisible(False)  
+        self.axis_y.setLabelsVisible(False) 
+        
+        self.audio_chart.addSeries(self.audio_series)
+        self.audio_chart.addAxis(self.axis_x, Qt.AlignmentFlag.AlignBottom)
+        self.audio_chart.addAxis(self.axis_y, Qt.AlignmentFlag.AlignLeft)
+        
+        self.audio_series.attachAxis(self.axis_x)
+        self.audio_series.attachAxis(self.axis_y)
+        
+        self.audio_chart.setTitle("Audio Waveform")
+        self.audio_chart.legend().hide()
+        
+        self.audio_chart.setBackgroundBrush(Qt.GlobalColor.white)
+        self.audio_chart.setBackgroundVisible(True)
+        self.audio_chart.setPlotAreaBackgroundVisible(True)
+        self.audio_chart.setPlotAreaBackgroundBrush(Qt.GlobalColor.white)
+        
+        self.axis_x.setGridLineVisible(False)
+        self.axis_y.setGridLineVisible(True)
+        self.axis_y.setGridLineColor(Qt.GlobalColor.lightGray)
+        
+        self.chart_view = QChartView(self.audio_chart)
+        self.chart_view.setMinimumHeight(150)
+        self.chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
+
     def setup_ui(self):
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.layout = QVBoxLayout(self.central_widget)
+
         title_label = QLabel("Voice Translator")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title_label.setFont(QFont("Arial", 24, QFont.Weight.Bold))
         self.layout.addWidget(title_label)
 
         self.layout.addSpacing(20)
+
+        self.layout.addWidget(self.chart_view)
 
         input_layout = QHBoxLayout()
         self.record_button = QPushButton("Record")
@@ -107,10 +181,21 @@ class TranslatorApp(QMainWindow):
         save_button.clicked.connect(self.save_translation)
         self.layout.addWidget(save_button)
 
+    def update_waveform(self, audio_data):
+        normalized_data = audio_data / np.max(np.abs(audio_data))
+        
+        self.audio_series.clear()
+        step = len(normalized_data) // 1000
+        for i, value in enumerate(normalized_data[::step][:1000]):
+            self.audio_series.append(i, value)
+            
+        self.audio_chart.update()
+
     def start_recording(self):
         self.record_button.setEnabled(False)
         self.record_button.setText("Recording...")
         self.statusBar().showMessage('Recording...')
+        self.audio_series.clear()
         self.audio_thread.start()
 
     def on_text_detected(self, text):
