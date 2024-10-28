@@ -8,6 +8,8 @@ from src.audio.recorder import AudioThread
 from src.translator.model import TranslatorModel
 from src.database.manager import DatabaseManager
 
+from .history_window import TranslationHistoryWindow 
+
 class TranslatorApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -82,7 +84,7 @@ class TranslatorApp(QMainWindow):
 
         self.translator_model = TranslatorModel()
         self.db_manager = DatabaseManager()
-        
+
         self.setup_audio_visualizer()
         self.setup_ui()
 
@@ -153,6 +155,15 @@ class TranslatorApp(QMainWindow):
         save_button.setIcon(QIcon("assets/save_icon.png"))
         save_button.clicked.connect(self.save_translation)
         self.layout.addWidget(save_button)
+
+        history_button = QPushButton("Translation History")
+        history_button.setIcon(QIcon("assets/history_icon.png"))
+        history_button.clicked.connect(self.show_history)
+        self.layout.addWidget(history_button)
+
+    def show_history(self):
+        history_window = TranslationHistoryWindow(self.db_manager, self)
+        history_window.exec()
 
     def setup_audio_visualizer(self):
         self.audio_chart = QChart()
