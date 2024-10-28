@@ -85,12 +85,12 @@ The history interface provides:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Silvano315/GUI-Voice-Translator-from-Italian.git
+git clone https://github.com/Silvano315/Advanced-Voice-Translator-with-Multilingual-Support.git
 ```
 
 2. Navigate to project directory:
 ```bash
-cd GUI-Voice-Translator-from-Italian
+cd Advanced-Voice-Translator-with-Multilingual-Support
 ```
 
 3. Install dependencies:
