@@ -1,6 +1,7 @@
-PyQt6
-SpeechRecognition
-transformers
-torch
-pydub
-sqlite3
+numpy==2.1.2
+pydub==0.25.1
+PyQt6==6.7.1
+PyQt6_sip==13.8.0
+SpeechRecognition==3.10.4
+torch==2.4.1
+transformers==4.44.2
