@@ -7,11 +7,21 @@ import numpy as np
 from src.audio.recorder import AudioThread
 from src.translator.model import TranslatorModel
 from src.database.manager import DatabaseManager
-
+from typing import Dict, List, Optional
 from .history_window import TranslationHistoryWindow 
 
 class TranslatorApp(QMainWindow):
-    def __init__(self):
+    """
+    Main application window for the Voice Translator application.
+    Provides UI for voice recording, text translation, and translation history management.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initialize the translator application window with all UI components,
+        audio processing thread, translation model, and database connection.
+        """
+
         super().__init__()
         self.setWindowTitle("Vocal Translator")
         self.setGeometry(100, 100, 800, 600)
@@ -90,7 +100,12 @@ class TranslatorApp(QMainWindow):
 
         self.statusBar().showMessage('Ready')
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        """
+        Set up the user interface components including language selection,
+        text areas, buttons, and audio visualization.
+        """
+
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
@@ -161,11 +176,19 @@ class TranslatorApp(QMainWindow):
         history_button.clicked.connect(self.show_history)
         self.layout.addWidget(history_button)
 
-    def show_history(self):
+    def show_history(self) -> None:
+        """
+        Display the translation history window as a modal dialog.
+        """
+
         history_window = TranslationHistoryWindow(self.db_manager, self)
         history_window.exec()
 
-    def setup_audio_visualizer(self):
+    def setup_audio_visualizer(self) -> None:
+        """
+        Initialize the audio waveform visualization chart and its components.
+        """
+
         self.audio_chart = QChart()
         self.audio_series = QLineSeries()
         
@@ -205,7 +228,14 @@ class TranslatorApp(QMainWindow):
         self.chart_view.setMinimumHeight(150)
         self.chart_view.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-    def update_waveform(self, audio_data):
+    def update_waveform(self, audio_data: np.ndarray) -> None:
+        """
+        Update the audio waveform visualization with new audio data.
+
+        Args:
+            audio_data: Numpy array containing audio waveform data
+        """
+
         normalized_data = audio_data / np.max(np.abs(audio_data))
         
         self.audio_series.clear()
@@ -215,7 +245,12 @@ class TranslatorApp(QMainWindow):
             
         self.audio_chart.update()
 
-    def start_recording(self):
+    def start_recording(self) -> None:
+        """
+        Start the audio recording process with the selected source language.
+        Updates UI elements to reflect recording state.
+        """
+
         source_lang = self.source_lang_combo.currentText().lower()
         try:
             self.audio_thread.set_language(source_lang)
@@ -226,21 +261,38 @@ class TranslatorApp(QMainWindow):
         except ValueError as e:
             self.statusBar().showMessage(str(e))
 
-    def on_text_detected(self, text):
+    def on_text_detected(self, text: str) -> None:
+        """
+        Handle detected speech text from the audio thread.
+
+        Args:
+            text: Detected speech text
+        """
+
         self.input_text.setPlainText(text)
         self.record_button.setEnabled(True)
         self.record_button.setText("Record")
         self.statusBar().showMessage('Recording completed')
 
-    
+    def update_target_languages(self, source_lang: str) -> None:
+        """
+        Update available target languages based on selected source language.
 
-    def update_target_languages(self, source_lang):
+        Args:
+            source_lang: Selected source language
+        """
+
         self.target_lang_combo.clear()
         supported_pairs = [target for (source, target) in self.translator_model.language_pairs.keys() 
                          if source.lower() == source_lang.lower()]
         self.target_lang_combo.addItems([lang.capitalize() for lang in supported_pairs])
 
-    def translate_text(self):
+    def translate_text(self) -> None:
+        """
+        Translate the input text using the selected language pair.
+        Updates the output text area with the translation result.
+        """
+
         source_lang = self.source_lang_combo.currentText().lower()
         target_lang = self.target_lang_combo.currentText().lower()
         input_text = self.input_text.toPlainText()
@@ -251,7 +303,12 @@ class TranslatorApp(QMainWindow):
             self.output_text.setPlainText(translation)
             self.statusBar().showMessage('Translation completed')
 
-    def save_translation(self):
+    def save_translation(self) -> None:
+        """
+        Save the current translation pair to the database.
+        Updates status bar to confirm save operation.
+        """
+        
         source_text = self.input_text.toPlainText()
         target_text = self.output_text.toPlainText()
         source_lang = self.source_lang_combo.currentText().lower()

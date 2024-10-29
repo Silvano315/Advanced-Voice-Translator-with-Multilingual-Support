@@ -4,15 +4,35 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLineEdit,
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 from datetime import datetime
+from typing import Optional, Set
+from src.database.manager import DatabaseManager
 
 class TranslationHistoryWindow(QDialog):
-    def __init__(self, db_manager, parent=None):
+    """
+    Dialog window for displaying and managing translation history.
+    Provides search, filter, copy and delete functionality for past translations.
+    """
+
+    def __init__(self, db_manager: DatabaseManager, parent: Optional[QDialog] = None) -> None:
+        """
+        Initialize the translation history window.
+
+        Args:
+            db_manager: Database manager instance for translations
+            parent: Parent widget (optional)
+        """
+
         super().__init__(parent)
         self.db_manager = db_manager
         self.setup_ui()
         self.load_translations()
         
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        """
+        Set up the user interface components including search bar,
+        language filters, translation table and action buttons.
+        """
+
         self.setWindowTitle("Translation History")
         self.setMinimumSize(800, 600)
         
@@ -69,10 +89,16 @@ class TranslationHistoryWindow(QDialog):
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.load_translations)
         
-    def delayed_search(self):
+    def delayed_search(self) -> None:
+        """
+        Trigger a delayed search to avoid excessive database queries while typing.
+        """
         self.search_timer.start(300) 
         
-    def load_translations(self):
+    def load_translations(self) -> None:
+        """
+        Load and display translations based on current search criteria and filters.
+        """
         search_text = self.search_input.text()
         source_lang = None if self.source_lang_combo.currentText() == "All Languages" else self.source_lang_combo.currentText()
         target_lang = None if self.target_lang_combo.currentText() == "All Languages" else self.target_lang_combo.currentText()
@@ -92,14 +118,23 @@ class TranslationHistoryWindow(QDialog):
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)  
                 self.table.setItem(i, j, item)
     
-    def delete_selected(self):
+    def delete_selected(self) -> None:
+        """
+        Delete selected translation entries from both table and database.
+        """
         selected_rows = set(item.row() for item in self.table.selectedItems())
         for row in sorted(selected_rows, reverse=True):
             translation_id = int(self.table.item(row, 0).text())
             self.db_manager.delete_translation(translation_id)
             self.table.removeRow(row)
     
-    def copy_text(self, column):
+    def copy_text(self, column: int) -> None:
+        """
+        Copy text from selected table cell to clipboard.
+
+        Args:
+            column: Column index of the text to copy (1 for source, 2 for target)
+        """
         selected_items = self.table.selectedItems()
         if selected_items:
             row = selected_items[0].row()
