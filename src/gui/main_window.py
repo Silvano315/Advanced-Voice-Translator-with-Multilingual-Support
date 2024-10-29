@@ -216,11 +216,15 @@ class TranslatorApp(QMainWindow):
         self.audio_chart.update()
 
     def start_recording(self):
-        self.record_button.setEnabled(False)
-        self.record_button.setText("Recording...")
-        self.statusBar().showMessage('Recording...')
-        self.audio_series.clear()
-        self.audio_thread.start()
+        source_lang = self.source_lang_combo.currentText().lower()
+        try:
+            self.audio_thread.set_language(source_lang)
+            self.record_button.setEnabled(False)
+            self.record_button.setText("Recording...")
+            self.statusBar().showMessage('Recording...')
+            self.audio_thread.start()
+        except ValueError as e:
+            self.statusBar().showMessage(str(e))
 
     def on_text_detected(self, text):
         self.input_text.setPlainText(text)
